@@ -40,6 +40,9 @@
 @SET __MVNW_ARG0_NAME__=
 @SET MVNW_USERNAME=
 @SET MVNW_PASSWORD=
+@IF "%JAVA_HOME%"=="" IF EXIST "C:\Program Files\Java\latest\jdk-21\bin\java.exe" SET "JAVA_HOME=C:\Program Files\Java\latest\jdk-21"
+@IF "%JAVA_HOME%"=="" IF EXIST "C:\Program Files\Java\jdk-21.0.10\bin\java.exe" SET "JAVA_HOME=C:\Program Files\Java\jdk-21.0.10"
+@IF NOT "%JAVA_HOME%"=="" SET "PATH=%JAVA_HOME%\bin;%PATH%"
 @IF NOT "%__MVNW_CMD__%"=="" ("%__MVNW_CMD__%" %*)
 @echo Cannot start maven from wrapper >&2 && exit /b 1
 @GOTO :EOF

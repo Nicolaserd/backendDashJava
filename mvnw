@@ -35,8 +35,16 @@ set -euf
 # OS specific support.
 native_path() { printf %s\\n "$1"; }
 case "$(uname)" in
-CYGWIN* | MINGW*)
+CYGWIN* | MINGW* | MSYS*)
+  if [ -z "${JAVA_HOME-}" ]; then
+    if [ -x "/c/Program Files/Java/latest/jdk-21/bin/java.exe" ]; then
+      JAVA_HOME="/c/Program Files/Java/latest/jdk-21"
+    elif [ -x "/c/Program Files/Java/jdk-21.0.10/bin/java.exe" ]; then
+      JAVA_HOME="/c/Program Files/Java/jdk-21.0.10"
+    fi
+  fi
   [ -z "${JAVA_HOME-}" ] || JAVA_HOME="$(cygpath --unix "$JAVA_HOME")"
+  [ -z "${JAVA_HOME-}" ] || export JAVA_HOME
   native_path() { cygpath --path --windows "$1"; }
   ;;
 esac

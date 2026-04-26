@@ -2,7 +2,9 @@
 
 ## Project Structure & Module Organization
 
-This repository is a minimal Spring Boot backend built with Maven. Main Java source files live under `src/main/java/com/example/demo`, with `DemoApplication.java` as the application entry point. Runtime configuration belongs in `src/main/resources`, currently `application.properties`. Tests mirror the main package structure under `src/test/java/com/example/demo`. Maven wrapper files (`mvnw`, `mvnw.cmd`) should be used so contributors do not need a global Maven install.
+This repository is a minimal Spring Boot backend built with Maven. Main Java source files live under `src/main/java/com/nicolas/backenddash`, with `BackendDashApplication.java` as the application entry point. Runtime configuration belongs in `src/main/resources`, currently `application.properties`. Tests mirror the main package structure under `src/test/java/com/nicolas/backenddash`. Maven wrapper files (`mvnw`, `mvnw.cmd`) should be used so contributors do not need a global Maven install.
+
+Follow the project-wide entity structure and reuse rules in `PROJECT_RULES.md` before creating, editing, or deleting code.
 
 ## Build, Test, and Development Commands
 
@@ -32,7 +34,7 @@ Use standard Java conventions: 4-space indentation, `PascalCase` for classes, `c
 
 ## Testing Guidelines
 
-The project uses JUnit 5 with Spring Boot test support. Name test classes with the `*Tests` suffix, matching the current `DemoApplicationTests` pattern. Add focused tests for new controllers, services, or configuration changes. Run `.\mvnw.cmd test` before submitting changes. There is no fixed coverage threshold yet, but new behavior should include meaningful tests.
+The project uses JUnit 5 with Spring Boot test support. Name test classes with the `*Tests` suffix, matching the current `BackendDashApplicationTests` pattern. Add focused tests for new controllers, services, or configuration changes. Run `.\mvnw.cmd test` before submitting changes. There is no fixed coverage threshold yet, but new behavior should include meaningful tests.
 
 ## Commit & Pull Request Guidelines
 
