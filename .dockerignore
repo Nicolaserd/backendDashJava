@@ -1,0 +1,11 @@
+.git
+.github
+.mvn
+target
+tmp
+*.log
+.env
+README.md
+AGENTS.md
+CONTEXT.md
+PROJECT_RULES.md

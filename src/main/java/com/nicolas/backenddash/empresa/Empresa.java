@@ -26,6 +26,9 @@ public class Empresa {
 	@Column(nullable = false)
 	private Integer numeroEmpleados;
 
+	@Column(nullable = false, columnDefinition = "boolean default true")
+	private Boolean activa;
+
 	@OneToMany(mappedBy = "empresa")
 	private Set<Usuario> usuarios = new LinkedHashSet<>();
 
@@ -35,6 +38,7 @@ public class Empresa {
 	public Empresa(String nombre) {
 		this.nombre = nombre;
 		this.numeroEmpleados = 0;
+		this.activa = Boolean.TRUE;
 	}
 
 	public UUID getId() {
@@ -59,5 +63,13 @@ public class Empresa {
 
 	public Set<Usuario> getUsuarios() {
 		return usuarios;
+	}
+
+	public Boolean getActiva() {
+		return activa;
+	}
+
+	public void setActiva(Boolean activa) {
+		this.activa = activa;
 	}
 }

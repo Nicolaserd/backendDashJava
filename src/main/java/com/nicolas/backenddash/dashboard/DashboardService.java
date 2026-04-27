@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
@@ -87,11 +88,23 @@ public class DashboardService {
 		Dashboard dashboard = findEntity(id);
 		requireSameEmpresaScope(dashboard);
 		requireCanManage(dashboard);
+		Empresa targetEmpresa = resolveDashboardEmpresaForUpdate(dashboard, request.empresaId());
+		boolean empresaChanged = !sameEmpresa(dashboard.getEmpresa(), targetEmpresa);
+		if (empresaChanged && !dashboard.getUsuariosAsignados().isEmpty()) {
+			throw new ResponseStatusException(CONFLICT, "Unassign consumers before changing dashboard empresa");
+		}
+		if (empresaChanged
+				&& request.creadorId() == null
+				&& dashboard.getCreador() != null
+				&& !sameEmpresa(dashboard.getCreador().getEmpresa(), targetEmpresa)) {
+			throw new ResponseStatusException(FORBIDDEN, "creadorId is required when changing dashboard empresa");
+		}
 		dashboard.setNombre(request.nombre());
 		dashboard.setTipo(request.tipo());
 		dashboard.setContenido(request.contenido());
+		dashboard.setEmpresa(targetEmpresa);
 		if (authorizationService.currentUser().isAdmin() && request.creadorId() != null) {
-			dashboard.setCreador(findCreatorForEmpresa(request.creadorId(), dashboard.getEmpresa()));
+			dashboard.setCreador(findCreatorForEmpresa(request.creadorId(), targetEmpresa));
 		}
 		return DashboardResponse.from(dashboard);
 	}
@@ -114,6 +127,12 @@ public class DashboardService {
 		if (!sameEmpresa(dashboard.getEmpresa(), usuario.getEmpresa())) {
 			throw new ResponseStatusException(FORBIDDEN, "Usuario must belong to the same empresa as the dashboard");
 		}
+		boolean alreadyAssigned = dashboard.getUsuariosAsignados()
+				.stream()
+				.anyMatch(assigned -> assigned.getId().equals(usuarioId));
+		if (alreadyAssigned) {
+			throw new ResponseStatusException(CONFLICT, "Usuario is already assigned to this dashboard");
+		}
 		dashboard.assignUsuario(usuario);
 		return DashboardResponse.from(dashboard);
 	}
@@ -123,6 +142,9 @@ public class DashboardService {
 		requireSameEmpresaScope(dashboard);
 		requireCanManage(dashboard);
 		Usuario usuario = findUsuario(usuarioId);
+		if (usuario.getRol() != UsuarioRol.DASHBOARD_USUARIO) {
+			throw new ResponseStatusException(FORBIDDEN, "Only dashboard consumers can be unassigned");
+		}
 		dashboard.unassignUsuario(usuario);
 		return DashboardResponse.from(dashboard);
 	}
@@ -177,6 +199,12 @@ public class DashboardService {
 
 	private Empresa resolveDashboardEmpresa(UUID requestedEmpresaId) {
 		AuthenticatedUser user = authorizationService.currentUser();
+		if (user.isSuperAdmin()) {
+			if (requestedEmpresaId == null) {
+				throw new ResponseStatusException(FORBIDDEN, "empresaId is required for super admin dashboard creation");
+			}
+			return findEmpresa(requestedEmpresaId);
+		}
 		if (user.isAdmin()) {
 			if (user.empresaId() != null) {
 				if (requestedEmpresaId != null && !requestedEmpresaId.equals(user.empresaId())) {
@@ -203,6 +231,19 @@ public class DashboardService {
 	private Empresa findEmpresa(UUID empresaId) {
 		return empresaRepository.findById(empresaId)
 				.orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Empresa not found"));
+	}
+
+	private Empresa resolveDashboardEmpresaForUpdate(Dashboard dashboard, UUID requestedEmpresaId) {
+		Empresa currentEmpresa = dashboard.getEmpresa();
+		UUID currentEmpresaId = currentEmpresa != null ? currentEmpresa.getId() : null;
+		if (requestedEmpresaId == null || requestedEmpresaId.equals(currentEmpresaId)) {
+			return currentEmpresa;
+		}
+		AuthenticatedUser user = authorizationService.currentUser();
+		if (!user.isSuperAdmin()) {
+			throw new ResponseStatusException(FORBIDDEN, "Only SUPER_ADMIN can change dashboard empresa");
+		}
+		return findEmpresa(requestedEmpresaId);
 	}
 
 	private Usuario findCreatorForEmpresa(UUID creatorId, Empresa empresa) {

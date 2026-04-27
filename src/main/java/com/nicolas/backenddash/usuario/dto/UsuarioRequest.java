@@ -1,6 +1,7 @@
 package com.nicolas.backenddash.usuario.dto;
 
 import com.nicolas.backenddash.usuario.UsuarioRol;
+import com.nicolas.backenddash.usuario.UsuarioEstado;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,8 @@ public record UsuarioRequest(
 		String password,
 
 		Boolean activo,
+
+		UsuarioEstado estado,
 
 		UUID empresaId
 ) {

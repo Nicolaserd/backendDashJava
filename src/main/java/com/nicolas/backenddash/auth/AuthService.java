@@ -4,6 +4,7 @@ import com.nicolas.backenddash.empresa.Empresa;
 import com.nicolas.backenddash.empresa.EmpresaRepository;
 import com.nicolas.backenddash.security.PasswordHashService;
 import com.nicolas.backenddash.usuario.Usuario;
+import com.nicolas.backenddash.usuario.UsuarioEstado;
 import com.nicolas.backenddash.usuario.UsuarioRepository;
 import com.nicolas.backenddash.usuario.UsuarioRol;
 import com.nicolas.backenddash.usuario.dto.UsuarioResponse;
@@ -11,8 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Service
@@ -41,7 +43,7 @@ public class AuthService {
 			throw new ResponseStatusException(CONFLICT, "Email already exists");
 		});
 		Empresa empresa = empresaRepository.findById(request.empresaId())
-				.orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Empresa not found"));
+				.orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "empresaId must belong to an existing empresa"));
 
 		Usuario usuario = new Usuario(
 				request.nombre(),
@@ -50,7 +52,8 @@ public class AuthService {
 				request.email(),
 				empresa,
 				passwordHashService.hash(request.password()),
-				Boolean.TRUE
+				Boolean.TRUE,
+				UsuarioEstado.NO_APROBADO
 		);
 		Usuario savedUsuario = usuarioRepository.save(usuario);
 		return createAuthResponse(savedUsuario);
@@ -64,6 +67,14 @@ public class AuthService {
 		if (!Boolean.TRUE.equals(usuario.getActivo())
 				|| !passwordHashService.matches(request.password(), usuario.getPasswordHash())) {
 			throw new ResponseStatusException(UNAUTHORIZED, "Invalid credentials");
+		}
+		if (usuario.getEstado() != UsuarioEstado.APROBADO) {
+			throw new ResponseStatusException(UNAUTHORIZED, "User is not approved yet");
+		}
+		if (usuario.getRol() != UsuarioRol.SUPER_ADMIN
+				&& usuario.getEmpresa() != null
+				&& !Boolean.TRUE.equals(usuario.getEmpresa().getActiva())) {
+			throw new ResponseStatusException(FORBIDDEN, "Empresa is inactive");
 		}
 
 		return createAuthResponse(usuario);

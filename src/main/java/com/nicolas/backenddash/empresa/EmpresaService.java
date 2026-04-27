@@ -4,6 +4,7 @@ import com.nicolas.backenddash.empresa.dto.EmpresaRequest;
 import com.nicolas.backenddash.empresa.dto.EmpresaResponse;
 import com.nicolas.backenddash.security.AuthorizationService;
 import com.nicolas.backenddash.usuario.UsuarioRepository;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -33,14 +34,10 @@ public class EmpresaService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<EmpresaResponse> findAll() {
-		authorizationService.requireAdmin();
-		UUID currentEmpresaId = authorizationService.currentEmpresaId();
-		List<Empresa> empresas = currentEmpresaId == null
-				? empresaRepository.findAll()
-				: List.of(findEntity(currentEmpresaId));
-		return empresas
+	public List<EmpresaResponse> findAllPublic() {
+		return empresaRepository.findAll()
 				.stream()
+				.sorted(Comparator.comparing(Empresa::getNombre, String.CASE_INSENSITIVE_ORDER))
 				.map(this::toResponse)
 				.toList();
 	}
@@ -95,6 +92,17 @@ public class EmpresaService {
 			throw new ResponseStatusException(CONFLICT, "Empresa has usuarios associated");
 		}
 		empresaRepository.delete(empresa);
+	}
+
+	public EmpresaResponse updateActiva(UUID id, Boolean activa) {
+		authorizationService.requireAdmin();
+		Empresa empresa = findEntity(id);
+		UUID currentEmpresaId = authorizationService.currentEmpresaId();
+		if (currentEmpresaId != null && !currentEmpresaId.equals(id)) {
+			throw new ResponseStatusException(FORBIDDEN, "Admin can only change active status of their empresa");
+		}
+		empresa.setActiva(activa);
+		return toResponse(empresa);
 	}
 
 	private Empresa findEntity(UUID id) {

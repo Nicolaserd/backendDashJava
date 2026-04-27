@@ -3,8 +3,6 @@ package com.nicolas.backenddash.usuario;
 import com.nicolas.backenddash.empresa.Empresa;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,7 +28,6 @@ public class Usuario {
 	@Column(nullable = false, length = 120)
 	private String apellidos;
 
-	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 40)
 	private UsuarioRol rol;
 
@@ -47,6 +44,9 @@ public class Usuario {
 	@Column(nullable = false)
 	private Boolean activo;
 
+	@Column(nullable = false, length = 30, columnDefinition = "varchar(30) default 'NO_APROBADO'")
+	private UsuarioEstado estado;
+
 	@Column(nullable = false, updatable = false)
 	private LocalDateTime createdAt;
 
@@ -57,7 +57,7 @@ public class Usuario {
 	}
 
 	public Usuario(String nombre, String apellidos, UsuarioRol rol, String email, String passwordHash, Boolean activo) {
-		this(nombre, apellidos, rol, email, null, passwordHash, activo);
+		this(nombre, apellidos, rol, email, null, passwordHash, activo, UsuarioEstado.NO_APROBADO);
 	}
 
 	public Usuario(
@@ -69,6 +69,19 @@ public class Usuario {
 			String passwordHash,
 			Boolean activo
 	) {
+		this(nombre, apellidos, rol, email, empresa, passwordHash, activo, UsuarioEstado.NO_APROBADO);
+	}
+
+	public Usuario(
+			String nombre,
+			String apellidos,
+			UsuarioRol rol,
+			String email,
+			Empresa empresa,
+			String passwordHash,
+			Boolean activo,
+			UsuarioEstado estado
+	) {
 		this.nombre = nombre;
 		this.apellidos = apellidos;
 		this.rol = rol;
@@ -76,6 +89,7 @@ public class Usuario {
 		this.empresa = empresa;
 		this.passwordHash = passwordHash;
 		this.activo = activo != null ? activo : Boolean.TRUE;
+		this.estado = estado != null ? estado : UsuarioEstado.NO_APROBADO;
 	}
 
 	@PrePersist
@@ -85,6 +99,9 @@ public class Usuario {
 		updatedAt = now;
 		if (activo == null) {
 			activo = Boolean.TRUE;
+		}
+		if (estado == null) {
+			estado = UsuarioEstado.NO_APROBADO;
 		}
 	}
 
@@ -159,5 +176,13 @@ public class Usuario {
 
 	public LocalDateTime getUpdatedAt() {
 		return updatedAt;
+	}
+
+	public UsuarioEstado getEstado() {
+		return estado;
+	}
+
+	public void setEstado(UsuarioEstado estado) {
+		this.estado = estado;
 	}
 }

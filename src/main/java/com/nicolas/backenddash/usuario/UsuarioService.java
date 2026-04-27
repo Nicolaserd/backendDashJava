@@ -71,7 +71,8 @@ public class UsuarioService {
 				request.email(),
 				empresa,
 				passwordHashService.hash(request.password()),
-				request.activo()
+				request.activo(),
+				request.estado() != null ? request.estado() : UsuarioEstado.NO_APROBADO
 		);
 		return UsuarioResponse.from(usuarioRepository.save(usuario));
 	}
@@ -89,6 +90,23 @@ public class UsuarioService {
 		usuario.setEmpresa(resolveEmpresaForWrite(request.empresaId(), request.rol()));
 		usuario.setPasswordHash(passwordHashService.hash(request.password()));
 		usuario.setActivo(request.activo() != null ? request.activo() : Boolean.TRUE);
+		usuario.setEstado(request.estado() != null ? request.estado() : UsuarioEstado.NO_APROBADO);
+		return UsuarioResponse.from(usuario);
+	}
+
+	public UsuarioResponse updateEstado(UUID id, UsuarioEstado estado) {
+		authorizationService.requireAdmin();
+		Usuario usuario = findEntity(id);
+		ensureAdminCanAccess(usuario);
+		usuario.setEstado(estado);
+		return UsuarioResponse.from(usuario);
+	}
+
+	public UsuarioResponse updateActivo(UUID id, Boolean activo) {
+		authorizationService.requireAdmin();
+		Usuario usuario = findEntity(id);
+		ensureAdminCanAccess(usuario);
+		usuario.setActivo(activo);
 		return UsuarioResponse.from(usuario);
 	}
 

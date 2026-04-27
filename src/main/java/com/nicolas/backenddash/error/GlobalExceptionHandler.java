@@ -6,6 +6,10 @@ import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +23,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiErrorResponse> handleValidation(
@@ -102,11 +108,30 @@ public class GlobalExceptionHandler {
 		return build(status != null ? status : HttpStatus.BAD_REQUEST, message, List.of(), request);
 	}
 
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<ApiErrorResponse> handleDataIntegrityViolation(
+			DataIntegrityViolationException exception,
+			HttpServletRequest request
+	) {
+		LOGGER.error("Data integrity error at {} {}: {}", request.getMethod(), request.getRequestURI(), exception.getMessage(), exception);
+		return build(HttpStatus.CONFLICT, "Resource conflict", List.of(), request);
+	}
+
+	@ExceptionHandler(DataAccessException.class)
+	public ResponseEntity<ApiErrorResponse> handleDataAccess(
+			DataAccessException exception,
+			HttpServletRequest request
+	) {
+		LOGGER.error("Database access error at {} {}: {}", request.getMethod(), request.getRequestURI(), exception.getMessage(), exception);
+		return build(HttpStatus.INTERNAL_SERVER_ERROR, "Database operation failed", List.of(), request);
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiErrorResponse> handleUnexpected(
 			Exception exception,
 			HttpServletRequest request
 	) {
+		LOGGER.error("Unhandled error at {} {}", request.getMethod(), request.getRequestURI(), exception);
 		return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", List.of(), request);
 	}
 
