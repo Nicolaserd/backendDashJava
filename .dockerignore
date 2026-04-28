@@ -3,6 +3,7 @@
 .idea
 .vscode
 target
+tmp
 .env
 *.log
 README*
