@@ -1,16 +1,19 @@
 FROM maven:3.9.11-eclipse-temurin-21 AS build
 WORKDIR /app
 
-COPY pom.xml .
-COPY src ./src
+COPY .mvn .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw -B dependency:go-offline
 
-RUN mvn -B clean package -DskipTests
+COPY src ./src
+RUN ./mvnw -B clean package -DskipTests
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 10000
+ENV PORT=8080
+EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

@@ -1,11 +1,8 @@
 .git
 .github
-.mvn
+.idea
+.vscode
 target
-tmp
-*.log
 .env
-README.md
-AGENTS.md
-CONTEXT.md
-PROJECT_RULES.md
+*.log
+README*
